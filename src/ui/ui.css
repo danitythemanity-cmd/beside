@@ -412,3 +412,4 @@ button:disabled { cursor: not-allowed; }
   font-size: 0.9rem; font-weight: 600;
 }
 .cv-alert { margin: 12px 20px 0; }
+.pv-alert--info, .cv-alert--info { background: var(--amber-soft); color: var(--text); border-color: var(--amber-line); font-weight: 550; }

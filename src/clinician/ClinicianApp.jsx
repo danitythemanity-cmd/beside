@@ -185,7 +185,7 @@ function LiveDashboard({ code }) {
         peers={peers}
         mic={{ available: canListen, on: micOn, toggle: toggleMic }}
         interim={interim}
-        call={call}
+        call={{ ...call, linked: store.linked, blocked: store.blocked }}
         onSettings={() => setSettingsOpen(true)}
       />
       <SettingsSheet open={settingsOpen} onClose={() => setSettingsOpen(false)} voiceControls={false} />

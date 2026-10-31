@@ -14,6 +14,20 @@ import { read, write, KEYS } from './storage.js'
 
 export const hostId = (code) => `beside-v1-visit-${code}`
 
+// STUN finds a direct path; TURN relays when there isn't one (different
+// networks). Credentials come from /api/ice, fetched once per page.
+const FALLBACK_ICE = { iceServers: [{ urls: ['stun:stun.cloudflare.com:3478', 'stun:stun.l.google.com:19302'] }], relay: false }
+let icePromise = null
+function iceConfig() {
+  if (!icePromise) {
+    icePromise = fetch('/api/ice', { headers: { accept: 'application/json' } })
+      .then((r) => (r.ok ? r.json() : null))
+      .catch(() => null)
+      .then((j) => (Array.isArray(j?.iceServers) && j.iceServers.length ? j : FALLBACK_ICE))
+  }
+  return icePromise
+}
+
 function fromEvents(events, ui) {
   const state = events.reduce(reducer, createVisit())
   return { events, ids: new Set(events.map((e) => e.id)), state: ui ? { ...state, ui } : state }
@@ -48,7 +62,7 @@ function storeReducer(store, action) {
 /**
  * Event-sourced visit store.
  * @param {{ code?: string, role: 'patient'|'clinician'|'theater', sync?: boolean }} opts
- * @returns {{ state, events, dispatch, reset, getState, peers: string[], net: string, rtc: object }}
+ * @returns {{ state, events, dispatch, reset, getState, peers: string[], net: string, rtc: object, linked: boolean, blocked: boolean, relay: boolean }}
  */
 export function useVisitStore({ code = '', role, sync = true }) {
   const live = Boolean(sync && code)
@@ -58,6 +72,9 @@ export function useVisitStore({ code = '', role, sync = true }) {
   const selfId = useMemo(() => newId('d'), [])
   const [peers, setPeers] = useState({})
   const [net, setNet] = useState(live ? 'connecting' : 'off') // off | connecting | online | local
+  const [linked, setLinked] = useState(false) // a peer-to-peer link to the other device is open
+  const [blocked, setBlocked] = useState(false) // the networks couldn't reach each other
+  const [relay, setRelay] = useState(false) // a TURN relay is configured
   const [, tick] = useState(0)
 
   const channel = useRef(null) // BroadcastChannel
@@ -152,6 +169,11 @@ export function useVisitStore({ code = '', role, sync = true }) {
         conns.current.set(conn.peer, conn)
         conn.send({ kind: 'hello', from: selfId, role })
         setNet('online')
+        setLinked(true)
+        setBlocked(false)
+      })
+      conn.on('iceStateChanged', (state) => {
+        if (state === 'failed') setBlocked(true)
       })
       conn.on('data', (data) =>
         handle(
@@ -162,6 +184,7 @@ export function useVisitStore({ code = '', role, sync = true }) {
       )
       conn.on('close', () => {
         conns.current.delete(conn.peer)
+        setLinked(conns.current.size > 0)
         if (!disposed && role !== 'patient') retry = setTimeout(connect, 2000)
       })
       conn.on('error', () => conn.close())
@@ -172,9 +195,12 @@ export function useVisitStore({ code = '', role, sync = true }) {
       attach(peer.connect(hostId(code), { reliable: true, serialization: 'json' }))
     }
 
-    const create = () => {
+    const create = async () => {
+      const ice = await iceConfig()
       if (disposed) return
-      peer = role === 'patient' ? new Peer(hostId(code), { debug: 0 }) : new Peer({ debug: 0 })
+      setRelay(Boolean(ice.relay))
+      const options = { debug: 0, config: { iceServers: ice.iceServers } }
+      peer = role === 'patient' ? new Peer(hostId(code), options) : new Peer(options)
       peerRef.current = peer
       peer.on('open', () => {
         setNet(role === 'patient' ? 'online' : 'connecting')
@@ -254,7 +280,7 @@ export function useVisitStore({ code = '', role, sync = true }) {
   const rtc = useMemo(
     () => ({
       getPeer: () => peerRef.current,
-      remoteId: () => (role === 'patient' ? [...conns.current.keys()].at(-1) ?? null : hostId(code)),
+      remoteId: () => (conns.current.size ? (role === 'patient' ? [...conns.current.keys()].at(-1) : hostId(code)) : null),
       onCall: (fn) => {
         callListeners.current.add(fn)
         return () => callListeners.current.delete(fn)
@@ -273,5 +299,5 @@ export function useVisitStore({ code = '', role, sync = true }) {
     .filter(([r, t]) => r !== role && now - t < 9000)
     .map(([r]) => r)
 
-  return { state: store.state, events: store.events, dispatch, reset, getState, peers: connected, net, rtc }
+  return { state: store.state, events: store.events, dispatch, reset, getState, peers: connected, net, rtc, linked, blocked, relay }
 }

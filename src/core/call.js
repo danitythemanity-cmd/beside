@@ -11,6 +11,7 @@ export const canCall = typeof navigator !== 'undefined' && Boolean(navigator.med
 /**
  * @param {object} rtc  from useVisitStore
  * @returns call state and controls. phase: idle | outgoing | incoming | connecting | live
+ *   error is a code (not-linked | media | declined | no-answer | network) for the UI to word.
  */
 export function useCall(rtc) {
   const [phase, setPhase] = useState('idle')
@@ -55,6 +56,12 @@ export function useCall(rtc) {
       })
       mc.on('close', reset)
       mc.on('error', reset)
+      // The two networks couldn't reach each other (no relay, or the relay is blocked).
+      mc.on('iceStateChanged', (state) => {
+        if (state !== 'failed') return
+        reset()
+        setError('network')
+      })
     },
     [reset],
   )
@@ -69,7 +76,7 @@ export function useCall(rtc) {
     })
     const offSignal = rtc.onSignal((msg) => {
       if (msg.action === 'end' || msg.action === 'decline') {
-        if (msg.action === 'decline' && phaseRef.current === 'outgoing') setError('The call was declined.')
+        if (msg.action === 'decline' && phaseRef.current === 'outgoing') setError('declined')
         reset()
       }
     })
@@ -95,7 +102,7 @@ export function useCall(rtc) {
       setError('')
       const peer = rtc.getPeer()
       const to = rtc.remoteId()
-      if (!peer || peer.disconnected || !to) return setError('The other device isn’t connected yet.')
+      if (!peer || peer.disconnected || !to) return setError('not-linked')
       try {
         const stream = await getMedia(video)
         localRef.current = stream
@@ -107,11 +114,11 @@ export function useCall(rtc) {
           if (phaseRef.current !== 'outgoing') return
           rtc.signal({ action: 'end' })
           reset()
-          setError('No answer. Try again in a moment.')
+          setError('no-answer')
         }, 45000)
       } catch {
-        setError('Camera and microphone are blocked. Allow them in your browser to start a call.')
         reset()
+        setError('media')
       }
     },
     [rtc, wire, reset],
@@ -132,9 +139,9 @@ export function useCall(rtc) {
         incoming.current = null
         if (phaseRef.current === 'incoming') go('connecting')
       } catch {
-        setError('Camera and microphone are blocked. Allow them in your browser to join.')
         rtc.signal({ action: 'decline' })
         reset()
+        setError('media')
       }
     },
     [rtc, wire, reset],

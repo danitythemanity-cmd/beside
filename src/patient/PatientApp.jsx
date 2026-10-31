@@ -352,7 +352,7 @@ function LiveVisit({ code, profile }) {
               reduceMotion={settings.reduceMotion}
               interim={interim}
               mic={{ available: canListen && !inCall, on: micOn, toggle: toggleMic }}
-              call={call}
+              call={{ ...call, linked: store.linked, blocked: store.blocked }}
               onSettings={() => setSettingsOpen(true)}
               onEnd={() => setConfirmEnd(true)}
               footer={

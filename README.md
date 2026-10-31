@@ -96,6 +96,15 @@ Restart `npm run dev`. The settings sheet shows which provider and model are con
 
 Camera and microphone need HTTPS on real devices, so use the deployed URL for phone-to-laptop video.
 
+### Calls across different networks
+
+Two devices on the same Wi-Fi connect directly. Devices on different networks (a phone on mobile data and a laptop on home Wi-Fi, or most office and school networks) need a TURN relay. Add a free Cloudflare TURN key:
+
+1. In the Cloudflare dashboard, open **Realtime → TURN Server → Create**.
+2. Add `CLOUDFLARE_TURN_KEY_ID` and `CLOUDFLARE_TURN_KEY_API_TOKEN` to your environment (Vercel: Settings → Environment Variables), then redeploy.
+
+`/api/ice` then hands each browser short-lived relay credentials. Any other TURN provider works through `TURN_URLS`, `TURN_USERNAME`, and `TURN_CREDENTIAL`. If two devices can't reach each other, both screens say so instead of failing silently.
+
 ### Share a temporary public link
 
 Serve the production build (with the AI routes, gzipped) and tunnel it over SSH. Nothing to install, and the link is HTTPS, so camera and microphone work on phones:
@@ -123,6 +132,7 @@ Vercel detects Vite and the `api/` function. `vercel.json` rewrites app routes t
 ```
 api/assist.js                  AI tasks: turn, simplify, translate, strings, recap (Groq, Hugging Face, or Claude)
 api/transcribe.js              Whisper speech to text on Groq
+api/ice.js                     STUN/TURN servers for video and live sync
 src/app/                       App shell, router
 src/core/visit.js              Event types, reducer, selectors, metrics, coaching
 src/core/sync.js               Live sync by visit code (WebRTC data channel + BroadcastChannel + local log)

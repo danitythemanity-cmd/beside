@@ -72,7 +72,12 @@ export default function PatientVisit({ visit, actions, embedded = false, peers =
         {!embedded && (
           <div className="row" style={{ '--gap': '6px', flexWrap: 'nowrap' }}>
             {call && !visit.ended && call.phase === 'idle' && (
-              <IconButton label={t('call.start')} icon={Video} onClick={() => call.start()} disabled={!connected} />
+              <IconButton
+                label={call.linked ? t('call.start') : t('call.waitLink')}
+                icon={Video}
+                onClick={() => call.start()}
+                disabled={!connected || !call.linked}
+              />
             )}
             {!visit.ended && (
               <Button size="sm" variant="secondary" onClick={onEnd}>
@@ -86,10 +91,15 @@ export default function PatientVisit({ visit, actions, embedded = false, peers =
 
       {call?.error && (
         <p className="pv-alert" role="alert">
-          {call.error}
+          {t(`call.err.${call.error}`)}
           <button type="button" className="link" onClick={call.clearError}>
             {t('common.close')}
           </button>
+        </p>
+      )}
+      {call?.blocked && !call.linked && !visit.ended && (
+        <p className="pv-alert pv-alert--info" role="status">
+          {t('link.blocked')}
         </p>
       )}
       {call && <IncomingCall call={call} name={doctor} t={t} />}

@@ -82,7 +82,14 @@ export default function ClinicianVisit({ visit, actions, embedded = false, peers
             <Clock aria-hidden="true" /> {formatClock(elapsed)}
           </span>
           {call && !visit.ended && call.phase === 'idle' && (
-            <Button size="sm" variant="secondary" icon={Video} onClick={() => call.start()} disabled={!connected}>
+            <Button
+              size="sm"
+              variant="secondary"
+              icon={Video}
+              onClick={() => call.start()}
+              disabled={!connected || !call.linked}
+              title={call.linked ? undefined : tEn('call.waitLink')}
+            >
               Video call
             </Button>
           )}
@@ -95,10 +102,15 @@ export default function ClinicianVisit({ visit, actions, embedded = false, peers
         </div>
       </header>
 
+      {call?.blocked && !call.linked && !visit.ended && (
+        <p className="cv-alert cv-alert--info" role="status">
+          Can’t reach {name}’s phone from this network. Try the same Wi-Fi or a phone hotspot.
+        </p>
+      )}
       {call && <IncomingCall call={call} name={name} t={tEn} />}
       {call?.error && (
         <p className="cv-alert" role="alert">
-          {call.error}
+          {tEn(`call.err.${call.error}`)}
           <button type="button" className="link" onClick={call.clearError}>
             Dismiss
           </button>

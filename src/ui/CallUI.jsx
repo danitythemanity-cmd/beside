@@ -118,5 +118,11 @@ const EN = {
   'call.joinVideo': 'Join with video',
   'call.joinAudio': 'Join without camera',
   'call.decline': 'Not now',
+  'call.err.not-linked': 'The other device isn’t connected yet. Wait for “Connected”, then try again.',
+  'call.err.media': 'Camera and microphone are blocked. Allow them in your browser, then try again.',
+  'call.err.declined': 'The call was declined.',
+  'call.err.no-answer': 'No answer. Try again in a moment.',
+  'call.err.network': 'The video couldn’t get through between these networks. Try the same Wi-Fi or a phone hotspot.',
+  'call.waitLink': 'Video calls start once the other device is connected.',
 }
 export const tEn = (key, vars) => Object.entries(vars ?? {}).reduce((s, [k, v]) => s.replaceAll(`{${k}}`, v), EN[key] ?? key)
