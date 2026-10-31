@@ -1,0 +1,16 @@
+{
+  "name": "Beside: be heard at the doctor",
+  "short_name": "Beside",
+  "description": "A communication companion for disabled patients at the doctor.",
+  "start_url": "/patient",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0b",
+  "theme_color": "#0a0a0b",
+  "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }],
+  "shortcuts": [
+    { "name": "Patient app", "url": "/patient" },
+    { "name": "Clinician app", "url": "/clinician" },
+    { "name": "Sample visit", "url": "/demo" }
+  ]
+}
