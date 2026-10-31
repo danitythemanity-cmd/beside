@@ -1,7 +1,6 @@
 import { Check, Clock, Volume2, Square, Sparkles, BookOpen } from 'lucide-react'
 import { useState } from 'react'
 import { speak, stopSpeaking } from '../core/speech.js'
-import { langInfo } from '../core/i18n.js'
 import { Badge, Button } from '../ui/kit.jsx'
 import { stripMarkup } from '../ui/speech.jsx'
 
@@ -32,10 +31,7 @@ export default function PatientRecap({ recap, accoms = [], glossary = [], lang, 
       return setReading(false)
     }
     setReading(true)
-    const voiceLang = local ? langInfo(lang).voice : 'en-US'
-    const synth = window.speechSynthesis
-    const v = synth?.getVoices().find((x) => x.lang?.toLowerCase().startsWith(voiceLang.slice(0, 2).toLowerCase()))
-    speak([summary, ...steps].join(' '), { voiceURI: v?.voiceURI, onEnd: () => setReading(false) })
+    speak([summary, ...steps].join(' '), { lang: local ? lang : 'en', onEnd: () => setReading(false) })
   }
 
   return (

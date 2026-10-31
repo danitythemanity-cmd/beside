@@ -1,5 +1,5 @@
 // Offline shell: clinics often have bad Wi-Fi. Pages are network-first,
-// static assets cache-first. The API is never cached.
+// static assets (including recorded voice clips) cache-first. The API is never cached.
 const CACHE = 'beside-v1'
 
 self.addEventListener('install', (e) => {
@@ -17,6 +17,19 @@ self.addEventListener('fetch', (e) => {
   const req = e.request
   const url = new URL(req.url)
   if (req.method !== 'GET' || url.pathname.startsWith('/api/')) return
+  // The voice index changes when phrases are re-recorded: fresh when online.
+  if (url.pathname === '/voice/index.json') {
+    e.respondWith(
+      fetch(req)
+        .then((res) => {
+          const copy = res.clone()
+          if (res.ok) caches.open(CACHE).then((c) => c.put(req, copy))
+          return res
+        })
+        .catch(() => caches.match(req)),
+    )
+    return
+  }
   if (req.mode === 'navigate') {
     e.respondWith(
       fetch(req)

@@ -2,6 +2,7 @@
 // (and every device frame in the sample visit) follows them.
 import { createContext, useContext, useEffect, useMemo } from 'react'
 import { useStored, KEYS } from './storage.js'
+import { DEFAULT_VOICE, setVoicePrefs } from './speech.js'
 
 export const TEXT_SCALES = [
   { value: 1, label: 'Default' },
@@ -19,7 +20,9 @@ const DEFAULTS = {
   reduceMotion: false,
   voice: true,
   rate: 1,
-  voiceURI: null,
+  voiceURI: null, // device voice, used when the realistic voice can't speak
+  natural: true, // realistic AI voice
+  aiVoice: DEFAULT_VOICE,
 }
 
 const Ctx = createContext(null)
@@ -44,6 +47,10 @@ export function SettingsProvider({ children }) {
     const meta = document.querySelector('meta[name="theme-color"]')
     if (meta) meta.content = settings.theme === 'light' ? '#f6f6f4' : '#0a0a0b'
   }, [settings])
+
+  useEffect(() => {
+    setVoicePrefs({ natural: settings.natural, aiVoice: settings.aiVoice, rate: settings.rate, voiceURI: settings.voiceURI })
+  }, [settings.natural, settings.aiVoice, settings.rate, settings.voiceURI])
 
   const value = useMemo(() => [settings, (patch) => setStored((prev) => ({ ...(prev ?? {}), ...patch }))], [settings, setStored])
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>

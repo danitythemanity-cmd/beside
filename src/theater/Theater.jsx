@@ -7,7 +7,7 @@ import { useVisitStore } from '../core/sync.js'
 import { createActions } from '../core/actions.js'
 import { SCRIPT, SCRIPT_MS, FEATURES, scriptStrings, localizeEvent } from '../core/sampleVisit.js'
 import { painSentence } from '../core/visit.js'
-import { speak, stopSpeaking } from '../core/speech.js'
+import { speak, stopSpeaking, prepareSpeech } from '../core/speech.js'
 import { useSettings } from '../core/settings.jsx'
 import { useAi, aiStrings } from '../core/ai.js'
 import { LANGS, loadLanguage, useLanguageStatus } from '../core/i18n.js'
@@ -120,6 +120,13 @@ export default function Theater() {
     }, s.wait / speed)
     return () => clearTimeout(timer)
   }, [status, step, speed, apply])
+
+  // Have Sam's next words ready before they are said.
+  useEffect(() => {
+    if (status !== 'playing' || !settings.voice) return
+    const next = SCRIPT.slice(step, step + 8).find((s) => s.event?.type === 'line/add' && s.event.who === 'patient')
+    if (next) prepareSpeech(next.event.text)
+  }, [status, step, settings.voice])
 
   const start = useCallback(() => {
     stopSpeaking()

@@ -16,7 +16,7 @@ Beside is a communication companion for the exam room. The patient’s phone giv
 | 2 | **“This is me” card** | The patient’s own words: how they communicate, what overwhelms them, how pain shows up, what they need. It lands on the clinician’s tablet when the visit starts. |
 | 3 | **Live captions** | Everything said in the room appears in large Atkinson Hyperlegible text on the patient’s phone, word by word, and is announced once to screen readers. |
 | 4 | **Jargon decoder** | Medical terms are highlighted and swapped for plain words, with the original term kept small (“gently press on your belly · *palpate your abdomen*”). There are over 100 offline terms, plus AI for anything else. |
-| 5 | **Reply prediction + voice** | Three likely answers after every question, as big buttons. One tap speaks it aloud (speech synthesis) and shows it on the tablet. There’s also a 15-phrase AAC board and type-to-speak. |
+| 5 | **Reply prediction + realistic voice** | Three likely answers after every question, as big buttons. One tap speaks it aloud in a lifelike AI voice (Orpheus on Groq, six voices to choose from) and shows it on the tablet. There’s also a 15-phrase AAC board and type-to-speak. Suggested replies are voiced ahead of time, so a tap is heard right away. |
 | 6 | **Talk-to-me nudge** | When the clinician addresses the companion instead of the patient, the tablet shows “Please speak directly to Sam.” While the patient is choosing a reply, it shows “Sam is answering… silence is okay.” |
 | 7 | **Pain translator** | A body map plus quality, severity, and duration become a clinical-style summary (“sharp pain, right lower quadrant (RLQ), 7/10, 3 days, aggravated by movement”), spoken aloud in plain words. |
 | 8 | **Say it simpler + understanding meter** | One tap rewrites the last sentence in plain words, right away. Two taps tell the clinician to slow down and rephrase. |
@@ -52,7 +52,8 @@ Beside is a communication companion for the exam room. The patient’s phone giv
                        ▼ then AI refinement                      ▼
                jargon.js · local replies            POST /api/assist      (Vercel functions)
                                                     POST /api/transcribe
-                                                     ├─ Groq (GROQ_API_KEY): gpt-oss-120b, Whisper
+                                                    POST /api/speak
+                                                     ├─ Groq (GROQ_API_KEY): gpt-oss-120b, Whisper, Orpheus
                                                      ├─ Hugging Face (HF_TOKEN)
                                                      └─ Claude (ANTHROPIC_API_KEY)
 ```
@@ -60,6 +61,7 @@ Beside is a communication companion for the exam room. The patient’s phone giv
 - **Event-sourced visit engine** (`src/core/visit.js`). A visit is an append-only event log. The phone, the tablet, the sample visit, the home-page hero, and the saved recap all reduce the same log with the same reducer, so they can never disagree. Events whose type starts with `ui/` stay on the device.
 - **Live sync** (`src/core/sync.js`). The patient’s phone hosts the visit; clinicians connect to it over a WebRTC data channel (PeerJS signaling), so the conversation travels peer to peer, encrypted. Tabs in the same browser also share a `BroadcastChannel`. Every device persists the log locally and merges by event ID: late joiners request a snapshot, reloads resume, and duplicates are harmless. Presence pings drive the “Connected” indicator.
 - **Video calls** (`src/core/call.js`). The same peer connection carries audio and video. Either side can call; the other side is asked first. Captions start automatically on the clinician’s device, and the patient’s replies are spoken there, so they are never heard twice.
+- **A realistic voice** (`src/core/speech.js`, `api/speak.js`). Everything Beside says aloud (taps, typed words, pain reports, recaps, decoded papers) goes through one `speak()`. English uses Orpheus on Groq, split into sentence-sized pieces with the next one fetched while the current one plays, and with Orpheus’s padded silence trimmed so speech starts at once. Suggested replies and the sample visit’s next line are fetched ahead of time; phrases can also ship pre-recorded in `public/voice/`. Other languages, a slow network (over 4 seconds), or any failure fall back to the device’s most natural voice, so Beside never goes silent.
 - **Captions everywhere** (`src/core/speech.js`, `api/transcribe.js`). The browser’s speech recognizer when it has one; otherwise a voice-activity detector records each phrase and Groq Whisper transcribes it, with Whisper’s known silence hallucinations filtered out.
 - **Offline-first AI** (`src/core/actions.js`, `src/core/ai.js`). Every action answers instantly with the built-in decoder and heuristics, then upgrades when AI responds: speaker and addressee detection, extra jargon, three replies in English and the patient’s language, a plain-language translation, simplifications, and recaps. If AI is missing, slow, or wrong, the visit carries on.
 - **Server** (`api/assist.js`). Keys stay on the server. Each task has a strict schema (zod). Groq and Hugging Face use JSON mode with validation and one retry; Claude uses native structured outputs. A different model can be set per task. Addressee detection combines the model with rules for unambiguous wording (“So Mom, …”, “Sam, …”).
@@ -83,7 +85,7 @@ cp .env.example .env
 
 Then set **one** of these:
 
-- `GROQ_API_KEY` (recommended): fastest, and also powers Whisper captions. Default model `openai/gpt-oss-120b`; override with `GROQ_MODEL` or per task (`GROQ_MODEL_TURN`, …).
+- `GROQ_API_KEY` (recommended): fastest, and also powers Whisper captions and the realistic voice. Default model `openai/gpt-oss-120b`; override with `GROQ_MODEL` or per task (`GROQ_MODEL_TURN`, …). For the voice, accept the Orpheus terms once at [console.groq.com/playground?model=canopylabs%2Forpheus-v1-english](https://console.groq.com/playground?model=canopylabs%2Forpheus-v1-english), signed in to the account that owns the key.
 - `HF_TOKEN`: a Hugging Face token with Inference Providers access (`HF_MODEL`, default `meta-llama/Llama-3.3-70B-Instruct`).
 - `ANTHROPIC_API_KEY`: uses Claude (`claude-opus-5-5`, low effort for speed).
 
@@ -133,6 +135,7 @@ Vercel detects Vite and the `api/` function. `vercel.json` rewrites app routes t
 ```
 api/assist.js                  AI tasks: turn, simplify, translate, strings, recap (Groq, Hugging Face, or Claude)
 api/transcribe.js              Whisper speech to text on Groq
+api/speak.js                   Realistic text to speech (Orpheus on Groq)
 api/ice.js                     STUN/TURN servers for video and live sync
 src/app/                       App shell, router
 src/core/visit.js              Event types, reducer, selectors, metrics, coaching
@@ -150,6 +153,7 @@ src/theater/                   Sample visit player with device frames
 src/landing/                   Four-act intro and home page
 src/ui/                        Design system: tokens, components, captions, settings
 public/                        PWA manifest, icon, offline service worker
+public/voice/                  Pre-recorded phrases in the default voice (optional)
 ```
 
 Beside is a hackathon prototype, not a medical device.

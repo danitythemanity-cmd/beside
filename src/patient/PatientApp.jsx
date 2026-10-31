@@ -5,14 +5,14 @@ import {
 } from 'lucide-react'
 import { useRouter, match, Link } from '../app/router.jsx'
 import { useProfile, useHistory, useStored, KEYS, read, write, saveToHistory } from '../core/storage.js'
-import { useT, useDocumentLanguage, loadLanguage, langInfo } from '../core/i18n.js'
+import { useT, useDocumentLanguage, loadLanguage } from '../core/i18n.js'
 import { useAi, aiStrings, aiSimplify } from '../core/ai.js'
 import { useSettings } from '../core/settings.jsx'
 import { useVisitStore } from '../core/sync.js'
 import { createActions } from '../core/actions.js'
 import { makeCode, historyEntry } from '../core/visit.js'
 import { cardSections } from '../core/catalog.js'
-import { startListening, useCanListen, speak, stopSpeaking } from '../core/speech.js'
+import { startListening, useCanListen, speak, stopSpeaking, prepareSpeech } from '../core/speech.js'
 import { useCall } from '../core/call.js'
 import { findTerms, swapText } from '../core/jargon.js'
 import { Button, IconButton, Sheet, Switch, Badge, Empty, Logo, BackLink } from '../ui/kit.jsx'
@@ -273,6 +273,13 @@ function LiveVisit({ code, profile }) {
     [dispatch, getState, settings, inCall],
   )
 
+  // Have the suggested replies' voice ready, so a tap is heard at once.
+  const replyKey = state.replies.items?.map((r) => r.en).join('|')
+  useEffect(() => {
+    if (settings.voice && !inCall) state.replies.items?.forEach((r) => prepareSpeech(r.en))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [replyKey, settings.voice, inCall])
+
   // Start the visit (once), with the card translated to English for the clinician when needed.
   const started = useRef(false)
   useEffect(() => {
@@ -511,8 +518,7 @@ function DecodePage({ profile, t, lang }) {
                 return setReading(false)
               }
               setReading(true)
-              const v = window.speechSynthesis?.getVoices().find((x) => x.lang?.toLowerCase().startsWith(langInfo(result.source === 'ai' ? lang : 'en').voice.slice(0, 2).toLowerCase()))
-              speak(result.plain, { voiceURI: v?.voiceURI, onEnd: () => setReading(false) })
+              speak(result.plain, { lang: result.source === 'ai' ? lang : 'en', onEnd: () => setReading(false) })
             }}
           >
             {reading ? t('common.stop') : t('common.readAloud')}

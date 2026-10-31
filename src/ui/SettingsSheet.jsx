@@ -1,7 +1,7 @@
 import { Moon, Sun, Contrast, Volume2, Sparkles, WifiOff } from 'lucide-react'
 import { useSettings, TEXT_SCALES } from '../core/settings.jsx'
 import { useAi } from '../core/ai.js'
-import { speak, canSpeak, useVoices } from '../core/speech.js'
+import { speak, canSpeak, useVoices, useVoiceStatus, AI_VOICES } from '../core/speech.js'
 import { LANGS, useT } from '../core/i18n.js'
 import { Sheet, Segmented, Switch, Button, Badge } from './kit.jsx'
 
@@ -13,6 +13,7 @@ export default function SettingsSheet({ open, onClose, lang = 'en', language, on
   const [s, set] = useSettings()
   const ai = useAi()
   const voices = useVoices()
+  const voiceStatus = useVoiceStatus()
   const t = useT(lang)
 
   return (
@@ -80,23 +81,49 @@ export default function SettingsSheet({ open, onClose, lang = 'en', language, on
           <Switch checked={s.voice} onChange={(voice) => set({ voice })}>
             {t('settings.voiceOn')}
           </Switch>
+          <Switch checked={s.natural} onChange={(natural) => set({ natural })}>
+            {t('settings.natural')}
+          </Switch>
+          <p className="small muted" role="status">
+            {s.natural && voiceStatus === 'down' ? t('settings.naturalDown') : t('settings.naturalHint')}
+          </p>
+          {s.natural ? (
+            <div className="field">
+              <label htmlFor="set-ai-voice">{t('settings.whichVoice')}</label>
+              <select id="set-ai-voice" className="select" value={s.aiVoice} onChange={(e) => set({ aiVoice: e.target.value })}>
+                {AI_VOICES.map((v) => (
+                  <option key={v.id} value={v.id}>
+                    {v.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : (
+            voices.length > 0 && (
+              <div className="field">
+                <label htmlFor="set-device-voice">{t('settings.deviceVoice')}</label>
+                <select id="set-device-voice" className="select" value={s.voiceURI ?? ''} onChange={(e) => set({ voiceURI: e.target.value || null })}>
+                  <option value="">{t('settings.autoVoice')}</option>
+                  {voices.slice(0, 60).map((v) => (
+                    <option key={v.voiceURI} value={v.voiceURI}>
+                      {v.name} ({v.lang})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )
+          )}
           <div className="field">
             <label htmlFor="set-rate">
               {t('settings.rate')} <span className="muted">· {s.rate.toFixed(1)}×</span>
             </label>
             <input id="set-rate" className="range" type="range" min="0.6" max="1.6" step="0.1" value={s.rate} onChange={(e) => set({ rate: Number(e.target.value) })} />
           </div>
-          {voices.length > 0 && (
-            <select aria-label={t('settings.voice')} className="select" value={s.voiceURI ?? ''} onChange={(e) => set({ voiceURI: e.target.value || null })}>
-              <option value="">Default voice</option>
-              {voices.slice(0, 60).map((v) => (
-                <option key={v.voiceURI} value={v.voiceURI}>
-                  {v.name} ({v.lang})
-                </option>
-              ))}
-            </select>
-          )}
-          <Button variant="secondary" icon={Volume2} onClick={() => speak(t('settings.testPhrase'), { rate: s.rate, voiceURI: s.voiceURI })}>
+          <Button
+            variant="secondary"
+            icon={Volume2}
+            onClick={() => speak(t('settings.testPhrase'), { lang, rate: s.rate, natural: s.natural, aiVoice: s.aiVoice, voiceURI: s.voiceURI })}
+          >
             {t('settings.test')}
           </Button>
         </section>
