@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import {
   Play, UserRound, Stethoscope, IdCard, Video, Languages, MessageSquareText, HeartHandshake, Activity, Lightbulb, ListChecks, Check,
   Captions, LayoutGrid, Hourglass, Gauge, FileText, Award, History, Smartphone, Tablet, ClipboardCheck, ArrowRight, Volume2, Sparkles,
-  Ear, Brain, MessageCircle, Keyboard, Contrast, Type, Lock, Radio, Cpu, Zap,
+  Ear, Brain, MessageCircle, Keyboard, Contrast, Type, Lock, Radio, Cpu, Zap, Compass,
 } from 'lucide-react'
 import { SCRIPT } from '../core/sampleVisit.js'
 import { reduceAll, stamp } from '../core/visit.js'
@@ -10,6 +10,7 @@ import { setSessionFlag, sessionFlag, KEYS } from '../core/storage.js'
 import { Button, Logo } from '../ui/kit.jsx'
 import PatientVisit from '../patient/PatientVisit.jsx'
 import Intro from './Intro.jsx'
+import Tour from './Tour.jsx'
 
 // The hero shows the real patient screen, frozen mid-visit.
 function heroState() {
@@ -119,6 +120,7 @@ const FEATURE_GROUPS = [
 
 export default function Home() {
   const [intro, setIntro] = useState(() => !sessionFlag(KEYS.intro))
+  const [tour, setTour] = useState(false)
   const hero = useMemo(heroState, [])
   useReveal(!intro)
 
@@ -147,6 +149,9 @@ export default function Home() {
           <a href="#try">Try it</a>
         </nav>
         <div className="row" style={{ '--gap': '8px' }}>
+          <Button variant="ghost" size="sm" icon={Compass} onClick={() => setTour(true)}>
+            Tour
+          </Button>
           <Button variant="ghost" size="sm" icon={Stethoscope} to="/clinician">
             Clinician
           </Button>
@@ -177,7 +182,10 @@ export default function Home() {
                 Try it yourself
               </Button>
             </div>
-            <ul className="ld-meta ld-in" style={{ '--d': '320ms' }} aria-label="Highlights">
+            <button type="button" className="ld-tour-btn ld-in" style={{ '--d': '300ms' }} onClick={() => setTour(true)}>
+              <Compass aria-hidden="true" /> New here? Take the 30-second tour
+            </button>
+            <ul className="ld-meta ld-in" style={{ '--d': '360ms' }} aria-label="Highlights">
               <li>
                 <Zap aria-hidden="true" /> No sign-up
               </li>
@@ -413,6 +421,8 @@ export default function Home() {
           </div>
         </section>
       </main>
+
+      <Tour open={tour} onClose={() => setTour(false)} />
 
       <footer className="ld-foot">
         <Logo />

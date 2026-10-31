@@ -137,7 +137,7 @@ Return JSON: {"translation": "..."}`,
       .slice(0, 150)
       .map(([key, text]) => ({ key: clip(key, 80), text: clip(text, 600) }))
     return `Translate each item's "text" into ${langName(lang)} for a patient-facing medical communication app used by disabled patients.
-Rules: plain, warm, short like app interface text. Keep placeholders such as {name} or {doctor} exactly. Keep any [[a|b]] markup: translate "a", leave "b" unchanged. Keep "Beside" as the app name. Return every key, unchanged.
+Rules: plain, warm, short like app interface text, and grammatically natural for a native speaker. Keep placeholders such as {name} or {doctor} exactly. Keep any [[a|b]] markup: translate "a", leave "b" unchanged. Keep "Beside" as the app name. Return every key, unchanged.
 
 Items:
 ${JSON.stringify(items)}
@@ -187,7 +187,7 @@ async function callOpenAICompatible(p, mode, prompt) {
       if (p === 'groq') {
         body.response_format = { type: 'json_object' }
         // Reasoning models: think briefly, captions need to be fast.
-        if (model.startsWith('openai/gpt-oss')) body.reasoning_effort = 'low'
+        if (model.startsWith('openai/gpt-oss')) body.reasoning_effort = long ? 'medium' : 'low'
       } else {
         body.max_tokens = body.max_completion_tokens
         delete body.max_completion_tokens
@@ -253,6 +253,16 @@ export default async function handler(req, res) {
   const body = req.body ?? {}
   const mode = body.mode
   if (!PROMPTS[mode]) return res.status(400).json({ error: 'Unknown mode' })
+  // Don't spend AI calls on empty input.
+  const filled = (v) => typeof v === 'string' && v.trim().length > 0
+  const valid = {
+    turn: () => filled(body.utterance),
+    simplify: () => filled(body.text),
+    translate: () => filled(body.text),
+    strings: () => body.strings && typeof body.strings === 'object' && Object.keys(body.strings).length > 0,
+    recap: () => true,
+  }[mode]
+  if (!valid()) return res.status(400).json({ error: 'Nothing to process' })
   if (!LANG_NAMES[body.lang ?? 'en']) body.lang = 'en'
 
   try {

@@ -3,6 +3,14 @@
 // visit. Each step waits `wait` ms (at 1x), then dispatches `event`.
 // `focus` tells the theater which device to show on narrow screens.
 import { SAMPLE_PROFILE, SAMPLE_CLINICIAN } from './catalog.js'
+import { decode, findTerms } from './jargon.js'
+
+// "palpate your abdomen" -> "[[gently press on|palpate]] your [[belly|abdomen]]",
+// so translations keep plain words and the original term side by side.
+const withMarkup = (text) =>
+  decode(text, findTerms(text))
+    .map((s) => (s.term ? `[[${s.plain}|${s.term}]]` : s.text))
+    .join('')
 
 export const FEATURES = [
   { id: 'card', label: 'This is me card' },
@@ -192,7 +200,7 @@ export function scriptStrings() {
     const e = step.event
     if (!e) continue
     if (e.type === 'line/add') {
-      out[`l.${e.id}`] = e.text
+      out[`l.${e.id}`] = e.who === 'patient' ? e.text : withMarkup(e.text)
       e.replies?.forEach((r, i) => (out[`r.${e.id}.${i}`] = r))
     }
     if (e.type === 'line/plain') out[`p.${e.lineId}`] = e.plain

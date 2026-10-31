@@ -7,6 +7,7 @@ import Home from '../landing/Home.jsx'
 import Theater from '../theater/Theater.jsx'
 import PatientApp from '../patient/PatientApp.jsx'
 import ClinicianApp from '../clinician/ClinicianApp.jsx'
+import ErrorBoundary from './ErrorBoundary.jsx'
 
 const TITLES = [
   ['/demo', 'Sample visit · Beside'],
@@ -36,6 +37,16 @@ function Routes() {
   )
 }
 
+// A crash on one page shouldn't stick after navigating away: remount per path.
+function RoutesWithRecovery() {
+  const { path } = useRouter()
+  return (
+    <ErrorBoundary key={path}>
+      <Routes />
+    </ErrorBoundary>
+  )
+}
+
 export default function App() {
   useEffect(() => {
     checkAi()
@@ -45,7 +56,7 @@ export default function App() {
   return (
     <SettingsProvider>
       <Router>
-        <Routes />
+        <RoutesWithRecovery />
         <Announcer />
       </Router>
     </SettingsProvider>

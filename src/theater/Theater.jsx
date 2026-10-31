@@ -185,7 +185,7 @@ export default function Theater() {
       if (status !== 'idle') start()
       return
     }
-    const key = `beside.demo.${code}.v${Object.keys(scriptStrings()).length}`
+    const key = `beside.demo.${code}.v2-${Object.keys(scriptStrings()).length}`
     const cached = read(key, null)
     if (cached) {
       setTr(cached)

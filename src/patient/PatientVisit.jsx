@@ -4,7 +4,7 @@
 import { useEffect, useRef, useState } from 'react'
 import clsx from 'clsx'
 import {
-  MessageCircle, LayoutGrid, Activity, IdCard, Settings, Sparkles, Languages, Lightbulb, Send, RotateCcw, Captions, CaptionsOff, Video,
+  MessageCircle, LayoutGrid, Activity, IdCard, Settings, Sparkles, Languages, Lightbulb, Send, RotateCcw, Captions, CaptionsOff, Video, ArrowLeft,
   ThumbsUp, ThumbsDown, Hourglass, Hand, CircleHelp, Frown, Coffee, Bath, GlassWater, Heart, SunDim, VolumeX, LifeBuoy, Check, Clock, Share2,
 } from 'lucide-react'
 import { BOARD, cardSections } from '../core/catalog.js'
@@ -33,7 +33,7 @@ export function useElapsed(start, end) {
   return start ? (end ?? now) - start : 0
 }
 
-export default function PatientVisit({ visit, actions, embedded = false, peers = [], speed = 1, reduceMotion = false, interim = '', mic, call, onSettings, onEnd, footer }) {
+export default function PatientVisit({ visit, actions, embedded = false, peers = [], speed = 1, reduceMotion = false, interim = '', mic, call, onSettings, onEnd, onBack, footer }) {
   const lang = visit.patient?.language ?? 'en'
   const t = useT(lang)
   const ai = useAi()
@@ -54,6 +54,9 @@ export default function PatientVisit({ visit, actions, embedded = false, peers =
   return (
     <div className="pv" dir={dirOf(lang)} lang={lang === 'en' ? 'en' : lang}>
       <header className="pv-bar">
+        {!embedded && onBack && (
+          <IconButton label={t('nav.home')} icon={ArrowLeft} onClick={onBack} className="pv-back" />
+        )}
         <div className="pv-bar-text">
           <p className="pv-title">{t('visit.with', { doctor })}</p>
           <p className="pv-sub">

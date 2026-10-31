@@ -5,7 +5,7 @@
 import { aiReady, aiRecap, aiSimplify, aiTranslate, aiTurn, localSimplify, localTurn } from './ai.js'
 import { findTerms } from './jargon.js'
 import { speak } from './speech.js'
-import { lastLine, localRecap, newId, painSentence } from './visit.js'
+import { lastLine, localRecap, newId, painSentence, NO_STEPS } from './visit.js'
 import { langInfo } from './i18n.js'
 
 const asReply = (r) => (typeof r === 'string' ? { en: r } : r)
@@ -170,8 +170,8 @@ export function createActions({ dispatch, getState, voice, ai = true }) {
           const r = await aiRecap({ profile: s.patient, lines: s.lines, accoms: s.accoms, lang: pl })
           recap = {
             summary: r.summary,
-            nextSteps: r.next_steps ?? [],
-            local: r.local && pl !== 'en' ? { [pl]: { summary: r.local.summary, nextSteps: r.local.next_steps ?? [] } } : undefined,
+            nextSteps: r.next_steps?.length ? r.next_steps : [NO_STEPS],
+            local: r.local && pl !== 'en' && r.local.summary ? { [pl]: { summary: r.local.summary, nextSteps: r.local.next_steps ?? [] } } : undefined,
             source: 'ai',
           }
         } catch {

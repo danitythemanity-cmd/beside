@@ -8,7 +8,7 @@ import { useVisitStore } from '../core/sync.js'
 import { createActions } from '../core/actions.js'
 import { startListening, useCanListen, speak } from '../core/speech.js'
 import { useCall } from '../core/call.js'
-import { Badge, Button, Field, IconButton, Logo } from '../ui/kit.jsx'
+import { Badge, BackLink, Button, Field, IconButton, Logo } from '../ui/kit.jsx'
 import SettingsSheet from '../ui/SettingsSheet.jsx'
 import ClinicianVisit from './ClinicianVisit.jsx'
 
@@ -22,16 +22,12 @@ export default function ClinicianApp() {
         Skip to content
       </a>
       <header className="ca-bar">
-        <div className="row" style={{ '--gap': '4px' }}>
+        <div className="row" style={{ '--gap': '10px', flexWrap: 'nowrap' }}>
+          {m ? <BackLink to="/clinician" label="Join screen" /> : <BackLink to="/" label="Beside" />}
           <Logo to="/clinician" label="Beside clinician home" />
           <Badge icon={Stethoscope}>Clinician</Badge>
         </div>
-        <div className="row" style={{ '--gap': '6px' }}>
-          <Button variant="ghost" size="sm" to="/">
-            About
-          </Button>
-          {!m && <IconButton label="Settings" icon={Settings} onClick={() => setSettingsOpen(true)} />}
-        </div>
+        {!m && <IconButton label="Settings" icon={Settings} onClick={() => setSettingsOpen(true)} />}
       </header>
       <main id="ca-main" className="ca-main">
         {m ? <LiveDashboard code={m.code} /> : <Join />}

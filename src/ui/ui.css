@@ -187,7 +187,6 @@ button:disabled { cursor: not-allowed; }
 }
 .stack { display: flex; flex-direction: column; gap: var(--gap, 12px); }
 .row { display: flex; align-items: center; gap: var(--gap, 10px); flex-wrap: wrap; }
-.spacer { flex: 1; }
 
 /* ---------- Buttons ---------- */
 .btn {
@@ -413,3 +412,12 @@ button:disabled { cursor: not-allowed; }
 }
 .cv-alert { margin: 12px 20px 0; }
 .pv-alert--info, .cv-alert--info { background: var(--amber-soft); color: var(--text); border-color: var(--amber-line); font-weight: 550; }
+
+/* ---------- Back link ---------- */
+.back-link {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 14px 0 10px; border-radius: 999px;
+  border: 1px solid var(--line-2); background: var(--surface-2); color: var(--text); text-decoration: none;
+  font-weight: 600; font-size: 0.9rem; white-space: nowrap; transition: background 0.15s;
+}
+.back-link:hover { background: var(--surface-3); }
+[dir='rtl'] .back-arrow { transform: scaleX(-1); }

@@ -28,6 +28,7 @@ export const dirOf = (code) => langInfo(code).dir ?? 'ltr'
 
 const UI = {
   'nav.home': 'Home',
+  'nav.beside': 'Beside',
   'nav.decode': 'Decode',
   'nav.card': 'My card',
   'nav.visits': 'Visits',
@@ -126,10 +127,13 @@ const UI = {
   'recap.words': 'Words Beside explained',
   'recap.saved': 'Saved to your visits',
   'recap.waiting': 'Writing your recap…',
+  'recap.noSteps': 'Ask the doctor what happens next, and ask them to write it down for you.',
 
   'home.hi': 'Hi, {name}',
   'home.ready': 'Ready when you are.',
   'home.start': 'Start a visit',
+  'home.inProgress': 'Visit in progress',
+  'home.return': 'Return to visit',
   'home.startHint': 'Your clinician joins with a 4-digit code.',
   'home.card': 'My card',
   'home.recent': 'Recent visits',

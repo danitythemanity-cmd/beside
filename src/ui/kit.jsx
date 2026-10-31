@@ -97,6 +97,30 @@ export function Switch({ checked, onChange, children, hint }) {
   )
 }
 
+/** A clear way back: an arrow with a short label, up one level. */
+export function BackLink({ to, label, onClick }) {
+  const inner = (
+    <>
+      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false" className="back-arrow">
+        <path d="M19 12H5M12 19l-7-7 7-7" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+      <span>{label}</span>
+    </>
+  )
+  if (onClick) {
+    return (
+      <button type="button" className="back-link" onClick={onClick}>
+        {inner}
+      </button>
+    )
+  }
+  return (
+    <Link to={to} className="back-link">
+      {inner}
+    </Link>
+  )
+}
+
 export function Badge({ tone, icon: Icon, children, className, ...rest }) {
   return (
     <span className={clsx('badge', tone && `badge--${tone}`, className)} {...rest}>
@@ -131,7 +155,7 @@ export function Field({ label, hint, children, id: idProp }) {
 }
 
 /** Accessible modal built on <dialog>: focus trap, Escape, inert background for free. */
-export function Sheet({ open, onClose, title, children, footer }) {
+export function Sheet({ open, onClose, title, children, footer, className }) {
   const ref = useRef(null)
   const openRef = useRef(open)
   openRef.current = open
@@ -145,7 +169,7 @@ export function Sheet({ open, onClose, title, children, footer }) {
   return (
     <dialog
       ref={ref}
-      className="sheet"
+      className={clsx('sheet', className)}
       aria-labelledby={titleId}
       // Only a close the user caused (Escape, backdrop) reports back; closing because `open` went false does not.
       onClose={() => openRef.current && onClose()}

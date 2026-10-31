@@ -15,7 +15,7 @@ import { cardSections } from '../core/catalog.js'
 import { startListening, useCanListen, speak, stopSpeaking } from '../core/speech.js'
 import { useCall } from '../core/call.js'
 import { findTerms, swapText } from '../core/jargon.js'
-import { Button, IconButton, Sheet, Switch, Badge, Empty, Logo } from '../ui/kit.jsx'
+import { Button, IconButton, Sheet, Switch, Badge, Empty, Logo, BackLink } from '../ui/kit.jsx'
 import SettingsSheet from '../ui/SettingsSheet.jsx'
 import { stripMarkup } from '../ui/speech.jsx'
 import Onboarding, { AboutFields, CardFields, ModesPicker, NeedsPicker } from './Onboarding.jsx'
@@ -111,13 +111,11 @@ function Shell({ children, bare, t, onSettings, path }) {
         </a>
         {!bare && (
           <header className="pa-bar">
-            <Logo to="/patient" label="Beside patient home" />
-            <div className="row" style={{ '--gap': '6px' }}>
-              <Button variant="ghost" size="sm" to="/" aria-label="About Beside">
-                About
-              </Button>
-              <IconButton label={t('common.settings')} icon={Settings} onClick={onSettings} />
+            <div className="row" style={{ '--gap': '10px', flexWrap: 'nowrap' }}>
+              {path === '/patient' ? <BackLink to="/" label={t('nav.beside')} /> : <BackLink to="/patient" label={t('nav.home')} />}
+              <Logo to="/patient" label="Beside patient home" />
             </div>
+            <IconButton label={t('common.settings')} icon={Settings} onClick={onSettings} />
           </header>
         )}
         <main id="pa-main" className="pa-main">
@@ -154,9 +152,10 @@ function HomePage({ profile, t }) {
 
       {active?.code ? (
         <section className="pa-start" aria-labelledby="resume-h">
-          <h2 id="resume-h">{t('visit.code', { code: active.code })}</h2>
+          <h2 id="resume-h">{t('home.inProgress')}</h2>
+          <p className="muted">{t('visit.code', { code: active.code })}</p>
           <Button variant="accent" size="lg" icon={Play} onClick={() => navigate(`/patient/visit/${active.code}`)}>
-            {t('start.begin')}
+            {t('home.return')}
           </Button>
         </section>
       ) : (
@@ -355,6 +354,7 @@ function LiveVisit({ code, profile }) {
               call={{ ...call, linked: store.linked, blocked: store.blocked }}
               onSettings={() => setSettingsOpen(true)}
               onEnd={() => setConfirmEnd(true)}
+              onBack={() => navigate('/patient')}
               footer={
                 <Button variant="accent" size="lg" icon={Check} onClick={() => navigate('/patient')}>
                   {t('common.done')}

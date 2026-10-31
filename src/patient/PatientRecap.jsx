@@ -24,7 +24,7 @@ export default function PatientRecap({ recap, accoms = [], glossary = [], lang, 
   }
   const local = lang !== 'en' ? recap.local?.[lang] : null
   const summary = stripMarkup(local?.summary ?? recap.summary)
-  const steps = (local?.nextSteps?.length ? local.nextSteps : recap.nextSteps).map(stripMarkup)
+  const steps = (local?.nextSteps?.length ? local.nextSteps : recap.nextSteps?.length ? recap.nextSteps : [t('recap.noSteps')]).map(stripMarkup)
 
   const read = () => {
     if (reading) {

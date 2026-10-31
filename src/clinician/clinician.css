@@ -144,3 +144,7 @@
   .cv-bar, .cv-composer, .cv-nudges, .btn, .icon-btn, .ca-bar { display: none !important; }
   body { background: #fff; color: #000; }
 }
+@media (max-width: 480px) {
+  .ca-bar { padding: 10px 14px; }
+  .ca-bar .badge { display: none; }
+}

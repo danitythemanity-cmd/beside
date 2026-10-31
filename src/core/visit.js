@@ -226,6 +226,11 @@ export function reducer(state, e) {
     case 'visit/end': {
       let accoms = s.accoms
       if (accoms.some((a) => a.id === 'written')) accoms = upsertAccom(accoms, 'written', { status: 'provided', providedAt: e.at })
+      const clin = s.lines.filter((l) => l.who === 'clinician')
+      const spokeDirectly = clin.some((l) => l.to === 'patient') && clin.at(-1)?.to !== 'caregiver'
+      if (spokeDirectly && accoms.some((a) => a.id === 'direct' && a.status !== 'provided')) {
+        accoms = upsertAccom(accoms, 'direct', { status: 'provided', providedAt: e.at })
+      }
       return { ...s, ended: true, endedAt: e.at, recap: e.recap ?? null, accoms, composing: false, replies: { ...s.replies, items: [] } }
     }
 
@@ -319,7 +324,9 @@ export function coachingTips(state) {
   return tips
 }
 
-// Offline recap: built from what was said, used when Claude is unavailable.
+export const NO_STEPS = 'Ask the doctor what happens next, and ask them to write it down for you.'
+
+// Offline recap: built from what was said, used when the AI is unavailable.
 export function localRecap(state) {
   // Statements, not questions, are what the patient needs to remember.
   const said = state.lines.filter((l) => l.who === 'clinician' && !l.text.trim().endsWith('?'))
@@ -330,7 +337,7 @@ export function localRecap(state) {
   const steps = said.slice(-4).map((l) => l.plain?.en || swapForRecap(l))
   return {
     summary,
-    nextSteps: steps.length ? steps : ['Ask the doctor what happens next, and ask them to write it down for you.'],
+    nextSteps: steps.length ? steps : [NO_STEPS],
     source: 'local',
   }
 }

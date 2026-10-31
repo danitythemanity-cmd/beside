@@ -25,6 +25,7 @@ Beside is a communication companion for the exam room. The patient’s phone giv
 | 11 | **Video visits** | Peer-to-peer, encrypted video calls between patient and clinician, with live captions running throughout. The patient’s tapped replies are spoken on the clinician’s device, so the doctor hears them clearly. |
 | 12 | **15 languages** | The patient app, captions, replies, and recap appear in the patient’s language, while the clinician stays in English. Right-to-left layouts are supported for Arabic and Persian. |
 | 13 | **Decode tool** | Paste discharge papers or any medical text, and get it back in plain words in your language, read aloud. |
+| 14 | **30-second tour** | An optional, step-by-step walkthrough on the home page: two screens, the card, the visit code, talking, coaching, and the recap. |
 
 ## Accessibility of the app itself
 
